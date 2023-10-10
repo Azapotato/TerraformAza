@@ -13,17 +13,24 @@ data "aws_ami" "ubuntu" {
 
   owners = ["099720109477"] # Canonical
 }
+resource "aws_key_pair" "deployer" {
+  key_name   = "deployer-key"
+  public_key = file("~/.ssh/id_rsa.pub")
+
+}
 
 resource "aws_instance" "web" {
     ami = data.aws_ami.ubuntu.id
-
-  instance_type = "t2.micro"
-    availability_zone = "us-east-2a"
+    instance_type = "t3.micro"
     vpc_security_group_ids = [aws_security_group.allow_tls.id]
     key_name = aws_key_pair.deployer.key_name
     user_data = file("apache.sh")
-  tags = local.common_tags
+    subnet_id = aws_subnet.main1.id
+    tags = {
+    Name = "kaizen"
+  }
 }
+
 
 output ec2 {
     value = aws_instance.web.public_ip
